@@ -14,45 +14,60 @@ let PuzzleGUI = function(elem) {
 	this.render = function (puzzle) {
 		this.htmlElem.empty();
 
-		for (let y = 0; y < puzzle.height; y++) {
-			let r = this.newRow();
-			for (let x = 0; x < puzzle.width; x++) {
-				r.append(this.newCell(puzzle.grid[x][y]));
+		let r = this.newRow();
+		r.append(this.emptyCell());
+		for (let col = 0; col < puzzle.width; col++){
+			r.append(this.newSum(puzzle.sumColumn(col, puzzle.solution)));
+		}
+		r.append(this.emptyCell());
+		this.htmlElem.append(r);
+		for (let row = 0; row < puzzle.height; row++) {
+			r = this.newRow();
+			r.append(this.newSum(puzzle.sumRow(row, puzzle.solution)));
+			for (let col = 0; col < puzzle.width; col++) {
+				r.append(this.newCell(puzzle.grid[col][row]));
 			}
-
-			r.append(this.newSum(puzzle.sumRow(y, puzzle.solution)));
+			r.append(this.newSum(0));
 
 			this.htmlElem.append(r);
 		}
-		let r = this.newRow();
-		for (let x = 0; x < puzzle.width; x++) {
-			r.append(this.newSum(puzzle.sumColumn(x, puzzle.solution)));
+		r = this.newRow();
+		r.append(this.emptyCell());
+		for (let col = 0; col < puzzle.width; col++) {
+			r.append(this.newSum(0));
 		}
+		r.append(this.emptyCell());
 		this.htmlElem.append(r);
 	};
 
 	this.updateCellState = function (row, col, state) {
-		this.htmlElem.children().eq(row).children().eq(col).attr("state", state);
+		this.htmlElem.children().eq(row + 1).children().eq(col + 1).attr("state", state);
 	};
 
 	this.updateColumnState = function (col, state) {
-		this.htmlElem.children().last().children().eq(col).attr("state", state);
+		this.htmlElem.children().first().children().eq(col + 1).attr("state", state);
+		this.htmlElem.children().last().children().eq(col + 1).attr("state", state);
 	};
 
 	this.updateRowState = function (row, state) {
-		this.htmlElem.children().eq(row).children().last().attr("state", state);
+		this.htmlElem.children().eq(row + 1).children().first().attr("state", state);
+		this.htmlElem.children().eq(row + 1).children().last().attr("state", state);
 	};
 
 	this.newRow = function () {
 		return $("<div />").addClass("row");
 	};
 
+	this.emptyCell = function(){
+		return $("<div />").addClass("cell");
+	};
+
 	this.newCell = function (value) {
-		return $("<div/>").addClass("cell").html(value).attr("state", State.ON);
+		return $("<div />").addClass("cell").html(value).attr("state", State.ON);
 	};
 
 	this.newSum = function (sum) {
-		return $("<div/>").addClass("sum").html(sum).attr("state", State.UNSOLVED);
+		return $("<div />").addClass("sum").html(sum).attr("state", State.UNSOLVED);
 	}
 };
 
@@ -97,10 +112,10 @@ let Puzzle = function(width, height, min, max, gui) {
 	};
 
 	this.checkSolution = function () {
-		for (let x = 0; x < this.width; x++) {
-			for (let y = 0; y < this.height; y++) {
-				if(this.solution[x][y] == State.OFF && this.state[x][y] != State.OFF
-					|| this.state[x][y] == State.OFF && this.solution[x][y] != State.OFF) {
+		for (let col = 0; col < this.width; col++) {
+			for (let row = 0; row < this.height; row++) {
+				if(this.solution[col][row] == State.OFF && this.state[col][row] != State.OFF
+					|| this.state[col][row] == State.OFF && this.solution[col][row] != State.OFF) {
 					return false;
 				}
 			}
@@ -148,29 +163,29 @@ let Puzzle = function(width, height, min, max, gui) {
 		this.state = arrayFill(this.width, this.height, State.ON);
 
 		let rand;
-		let i = 0;
-		while (i < this.width) {
-			let r = i++;
-			do rand = randBetween(0, this.height - 1); while (this.solution[r][rand] == State.OFF);
-			this.solution[r][rand] = State.OFF;
+		for (let col = 0; col < this.width; col++){
+			do {
+				rand = randBetween(0, this.height - 1);
+			} while (this.solution[col][rand] == State.OFF);
+			this.solution[col][rand] = State.OFF;
 		}
-		i = 0;
-		while (i < this.height) {
-			let c = i++;
-			do rand = randBetween(0, this.width - 1); while (this.solution[rand][c] == State.OFF);
-			this.solution[rand][c] = State.OFF;
+		for (let row = 0; row < this.height; row++){
+			do {
+				rand = randBetween(0, this.width - 1);
+			} while (this.solution[rand][row] == State.OFF);
+			this.solution[rand][row] = State.OFF;
 		}
 
 		printGrid(this.solution)
 	};
 
 	this.reset = function(){
-		for (let x = 0; x < this.width; x++){
-			this.gui.updateColumnState(x, State.UNSOLVED);
-			for (let y = 0; y < this.height; y++){
-				this.setState(x, y, State.ON);
-				if (x == 0){
-					this.gui.updateRowState(y, State.UNSOLVED);
+		for (let col = 0; col < this.width; col++){
+			this.gui.updateColumnState(col, State.UNSOLVED);
+			for (let row = 0; row < this.height; row++){
+				this.setState(row, col, State.ON);
+				if (col == 0){
+					this.gui.updateRowState(row, State.UNSOLVED);
 				}
 			}
 		}
@@ -179,10 +194,10 @@ let Puzzle = function(width, height, min, max, gui) {
 
 
 let printGrid = function (grid) {
-	for (let y = 0; y < p.height; y++) {
+	for (let row = 0; row < p.height; row++) {
 		let r = "";
-		for (let x = 0; x < p.width; x++) {
-			r += grid[x][y] + " ";
+		for (let col  = 0; col < p.width; col ++) {
+			r += grid[col][row] + " ";
 		}
 
 		log(r);
@@ -195,8 +210,8 @@ let log = function (line) {
 
 let arrayFill = function (width, height, value) {
 	let a = [];
-	for (let y = 0; y < height; y++) {
-		a.push((new Array(width)).fill(value));
+	for (let col = 0; col < width; col++) {
+		a.push((new Array(height)).fill(value));
 	}
 
 	return a;
@@ -204,12 +219,12 @@ let arrayFill = function (width, height, value) {
 
 let arrayFillRandom = function (width, height, min, max) {
 	let a = [];
-	for (let y = 0; y < height; y++) {
-		let row = [];
-		for (let x = 0; x < width; x++) {
-			row.push(randBetween(min, max));
+	for (let col = 0; col < width; col++) {
+		let colData = [];
+		for (let row = 0; row < height; row++) {
+			colData.push(randBetween(min, max));
 		}
-		a.push(row);
+		a.push(colData);
 	}
 
 	return a;
@@ -219,7 +234,7 @@ let randBetween = function (min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
-let p; // puzzle
+var p; // puzzle
 
 $(document).ready(function () {
 	let htmlElem = $("#puzzle");
@@ -228,7 +243,7 @@ $(document).ready(function () {
 	$("#start").click(function () {
 		$("#solution").empty().hide(0);
 
-		p = new Puzzle(5, 5, 1, 9, pGUI);
+		p = new Puzzle(6, 8, 1, 9, pGUI);
 		p.generate();
 
 		pGUI.render(p);
@@ -249,8 +264,8 @@ $(document).ready(function () {
 	}).on("mouseleave", ".cell", function () {
 		start = 0;
 	}).on("mouseup", ".cell", function () {
-		let col = $(this).index();
-		let row = $(this).parent().index();
+		let col = $(this).index() - 1;
+		let row = $(this).parent().index() - 1;
 
 		if(new Date().getTime() >= (start + 300)) {
 			p.off(row, col);
