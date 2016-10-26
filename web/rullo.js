@@ -7,13 +7,12 @@ let State = {
 	SOLVED: 1 // row/column state
 };
 
-let p;
+let PuzzleGUI = function(elem) {
 
-let PuzzleGUI = function() {
+	this.htmlElem = elem;
 
 	this.render = function (puzzle) {
-		let htmlElem = $("#puzzle");
-		htmlElem.empty();
+		this.htmlElem.empty();
 
 		for (let y = 0; y < puzzle.height; y++) {
 			let r = this.newRow();
@@ -23,25 +22,25 @@ let PuzzleGUI = function() {
 
 			r.append(this.newSum(puzzle.sumRow(y, puzzle.solution)));
 
-			htmlElem.append(r);
+			this.htmlElem.append(r);
 		}
 		let r = this.newRow();
 		for (let x = 0; x < puzzle.width; x++) {
 			r.append(this.newSum(puzzle.sumColumn(x, puzzle.solution)));
 		}
-		htmlElem.append(r);
+		this.htmlElem.append(r);
 	};
 
 	this.updateCellState = function (row, col, state) {
-		$("#puzzle").children().eq(row).children().eq(col).attr("state", state);
+		this.htmlElem.children().eq(row).children().eq(col).attr("state", state);
 	};
 
 	this.updateColumnState = function (col, state) {
-		$("#puzzle").children().last().children().eq(col).attr("state", state);
+		this.htmlElem.children().last().children().eq(col).attr("state", state);
 	};
 
 	this.updateRowState = function (row, state) {
-		$("#puzzle").children().eq(row).children().last().attr("state", state);
+		this.htmlElem.children().eq(row).children().last().attr("state", state);
 	};
 
 	this.newRow = function () {
@@ -124,11 +123,11 @@ let Puzzle = function(width, height, min, max, gui) {
 		this.gui.updateRowState(row, sum == aim ? State.SOLVED : State.UNSOLVED);
 	};
 
-	this.genericSum = function (x, xInc, y, yInc, n, mask, grid) {
+	this.genericSum = function (x, xInc, y, yInc, n, mask) {
 		let s = 0;
 		for (let i = 0; i < n; i++, x += xInc, y += yInc) {
 			if(mask[x][y] != State.OFF) {
-				s += grid[x][y];
+				s += this.grid[x][y];
 			}
 		}
 
@@ -136,11 +135,11 @@ let Puzzle = function(width, height, min, max, gui) {
 	};
 
 	this.sumRow = function (row, mask) {
-		return this.genericSum(0, 1, row, 0, this.width, mask, this.grid);
+		return this.genericSum(0, 1, row, 0, this.width, mask);
 	};
 
 	this.sumColumn = function (column, mask) {
-		return this.genericSum(column, 0, 0, 1, this.height, mask, this.grid);
+		return this.genericSum(column, 0, 0, 1, this.height, mask);
 	};
 
 	this.generate = function(){
@@ -208,11 +207,14 @@ let randBetween = function (min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
+let p; // puzzle
+
 $(document).ready(function () {
+	let htmlElem = $("#puzzle");
+	let pGUI = new PuzzleGUI(htmlElem);
+
 	$("#start").click(function () {
 		$("#solution").empty().hide(0);
-
-		let pGUI = new PuzzleGUI();
 
 		p = new Puzzle(5, 5, 1, 9, pGUI);
 		p.generate();
@@ -225,7 +227,7 @@ $(document).ready(function () {
 
 
 	let start;
-	$("#puzzle").on("mousedown", ".cell", function () {
+	htmlElem.on("mousedown", ".cell", function () {
 		start = new Date().getTime();
 	}).on("mouseleave", ".cell", function () {
 		start = 0;
