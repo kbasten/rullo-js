@@ -1,0 +1,54 @@
+body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    color: #444;
+}
+
+#puzzle {
+    float: left;
+}
+
+.cell {
+    float: left;
+    width: 40px;
+    height: 30px;
+    text-align: center;
+    border: 1px solid #666;
+    border-radius: 21px;
+    margin: 5px;
+    padding-top: 10px;
+    cursor: pointer;
+}
+
+.cell[state="2"] {
+    background-color: orange;
+    border-color: orange;
+}
+
+.cell[state="0"] {
+    background-color: #DDD;
+    color: #BBB;
+    border-color: #BBB;
+}
+
+#console {
+    display: none;
+}
+
+.sum {
+    margin: 5px;
+    float: left;
+    width: 40px;
+    height: 30px;
+    border: 1px solid red;
+    text-align: center;
+    padding-top: 10px;
+}
+
+.sum[state="1"] {
+    border-color: green;
+}
