@@ -221,7 +221,7 @@ let randBetween = function (min, max) {
 
 $(document).ready(function () {
 	$("#start").click(function () {
-		$("#solution").empty();
+		$("#solution").empty().hide(0);
 
 		let pGUI = new PuzzleGUI();
 
