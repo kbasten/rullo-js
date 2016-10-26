@@ -163,6 +163,18 @@ let Puzzle = function(width, height, min, max, gui) {
 
 		printGrid(this.solution)
 	};
+
+	this.reset = function(){
+		for (let x = 0; x < this.width; x++){
+			this.gui.updateColumnState(x, State.UNSOLVED);
+			for (let y = 0; y < this.height; y++){
+				this.setState(x, y, State.ON);
+				if (x == 0){
+					this.gui.updateRowState(y, State.UNSOLVED);
+				}
+			}
+		}
+	}
 };
 
 
@@ -223,6 +235,11 @@ $(document).ready(function () {
 	});
 	$("#show_solution").click(function () {
 		$("#solution").toggle();
+	});
+	$("#reset").click(function(){
+		if (typeof p !== "undefined"){
+			p.reset();
+		}
 	});
 
 
