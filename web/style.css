@@ -52,3 +52,7 @@ body {
 .sum[state="1"] {
     border-color: green;
 }
+
+input[type="number"] {
+    width: 50px;
+}

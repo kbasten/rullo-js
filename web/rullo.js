@@ -44,14 +44,15 @@ let PuzzleGUI = function(elem) {
 		this.htmlElem.children().eq(row + 1).children().eq(col + 1).attr("state", state);
 	};
 
-	this.updateColumnState = function (col, state) {
+	this.updateColumnState = function (col, marked, state) {
 		this.htmlElem.children().first().children().eq(col + 1).attr("state", state);
-		this.htmlElem.children().last().children().eq(col + 1).attr("state", state);
+		this.htmlElem.children().last().children().eq(col + 1).attr("state", state).html(marked);
 	};
 
-	this.updateRowState = function (row, state) {
+	this.updateRowState = function (row, marked, state) {
 		this.htmlElem.children().eq(row + 1).children().first().attr("state", state);
-		this.htmlElem.children().eq(row + 1).children().last().attr("state", state);
+		this.htmlElem.children().eq(row + 1).children().last().attr("state", state).html(marked);
+
 	};
 
 	this.newRow = function () {
@@ -86,19 +87,22 @@ let Puzzle = function(width, height, min, max, gui) {
 	this.mark = function (row, col) {
 		if(this.state[col][row] != State.OFF) {
 			this.toggle(row, col, State.ON, State.MARKED);
+
+			this.updateRowState(row);
+			this.updateColumnState(col);
 		}
 	};
 
 	this.off = function (row, col) {
 		if(this.state[col][row] != State.MARKED) {
 			this.toggle(row, col, State.ON, State.OFF);
-		}
 
-		this.updateRowState(row);
-		this.updateColumnState(col);
+			this.updateRowState(row);
+			this.updateColumnState(col);
 
-		if(this.checkSolution()) {
-			alert("Finished!");
+			if(this.checkSolution()) {
+				alert("Finished!");
+			}
 		}
 	};
 
@@ -113,11 +117,13 @@ let Puzzle = function(width, height, min, max, gui) {
 
 	this.checkSolution = function () {
 		for (let col = 0; col < this.width; col++) {
-			for (let row = 0; row < this.height; row++) {
-				if(this.solution[col][row] == State.OFF && this.state[col][row] != State.OFF
-					|| this.state[col][row] == State.OFF && this.solution[col][row] != State.OFF) {
-					return false;
-				}
+			if (this.sumColumn(col, this.state) != this.sumColumn(col, this.solution)) {
+				return false;
+			}
+		}
+		for (let row = 0; row < this.height; row++){
+			if (this.sumRow(row, this.state) != this.sumRow(row, this.solution)) {
+				return false;
 			}
 		}
 
@@ -128,20 +134,24 @@ let Puzzle = function(width, height, min, max, gui) {
 		let sum = this.sumColumn(col, this.state);
 		let aim = this.sumColumn(col, this.solution);
 
-		this.gui.updateColumnState(col, sum == aim ? State.SOLVED : State.UNSOLVED);
+		let marked = this.sumColumn(col, this.state, true);
+
+		this.gui.updateColumnState(col, marked, sum == aim ? State.SOLVED : State.UNSOLVED);
 	};
 
 	this.updateRowState = function (row) {
 		let sum = this.sumRow(row, this.state);
 		let aim = this.sumRow(row, this.solution);
 
-		this.gui.updateRowState(row, sum == aim ? State.SOLVED : State.UNSOLVED);
+		let marked = this.sumRow(row, this.state, true);
+
+		this.gui.updateRowState(row, marked, sum == aim ? State.SOLVED : State.UNSOLVED);
 	};
 
-	this.genericSum = function (x, xInc, y, yInc, n, mask) {
+	this.genericSum = function (x, xInc, y, yInc, n, mask, marked) {
 		let s = 0;
 		for (let i = 0; i < n; i++, x += xInc, y += yInc) {
-			if(mask[x][y] != State.OFF) {
+			if((!marked && mask[x][y] != State.OFF) || (marked && mask[x][y] == State.MARKED)) {
 				s += this.grid[x][y];
 			}
 		}
@@ -149,12 +159,12 @@ let Puzzle = function(width, height, min, max, gui) {
 		return s;
 	};
 
-	this.sumRow = function (row, mask) {
-		return this.genericSum(0, 1, row, 0, this.width, mask);
+	this.sumRow = function (row, mask, marked = false) {
+		return this.genericSum(0, 1, row, 0, this.width, mask, marked);
 	};
 
-	this.sumColumn = function (column, mask) {
-		return this.genericSum(column, 0, 0, 1, this.height, mask);
+	this.sumColumn = function (column, mask, marked = false) {
+		return this.genericSum(column, 0, 0, 1, this.height, mask, marked);
 	};
 
 	this.generate = function(){
@@ -243,11 +253,16 @@ $(document).ready(function () {
 	$("#start").click(function () {
 		$("#solution").empty().hide(0);
 
-		p = new Puzzle(6, 8, 1, 9, pGUI);
+		let width = parseInt($("input[name='width']").val());
+		let height = parseInt($("input[name='height']").val());
+		let min = parseInt($("input[name='min']").val());
+		let max = parseInt($("input[name='max']").val());
+
+		p = new Puzzle(width, height, min, max, pGUI);
 		p.generate();
 
 		pGUI.render(p);
-	});
+	}).trigger("click");
 	$("#show_solution").click(function () {
 		$("#solution").toggle();
 	});
