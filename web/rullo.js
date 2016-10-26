@@ -182,17 +182,6 @@ let log = function (line) {
 	$("#solution").append($("<div/>").html(line));
 };
 
-let fisherYates = function (a) {
-	for (let i = 0; i < a.length - 2; i++) {
-		let j = randBetween(i, a.length - 1);
-		let temp = a[i];
-		a[i] = a[j];
-		a[j] = temp;
-	}
-
-	return a;
-};
-
 let arrayFill = function (width, height, value) {
 	let a = [];
 	for (let y = 0; y < height; y++) {
