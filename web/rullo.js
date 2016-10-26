@@ -23,7 +23,7 @@ let PuzzleGUI = function() {
 
 			r.append(this.newSum(puzzle.sumRow(y, puzzle.solution)));
 
-			$("#puzzle").append(r);
+			htmlElem.append(r);
 		}
 		let r = this.newRow();
 		for (let x = 0; x < puzzle.width; x++) {
@@ -57,10 +57,12 @@ let PuzzleGUI = function() {
 	}
 };
 
-let Puzzle = function(width, height, gui) {
+let Puzzle = function(width, height, min, max, gui) {
 
 	this.width = width;
 	this.height = height;
+	this.min = min;
+	this.max = max;
 	this.gui = gui;
 
 	this.solution = [];
@@ -141,32 +143,26 @@ let Puzzle = function(width, height, gui) {
 		return this.genericSum(column, 0, 0, 1, this.height, mask, this.grid);
 	};
 
-	this.generate = function () {
-		let offPercentage = 0.4;
-		this.grid = arrayFillRandom(this.width, this.height, 1, 9);
+	this.generate = function(){
+		this.grid = arrayFillRandom(this.width, this.height, this.min, this.max);
 		this.solution = arrayFill(this.width, this.height, State.ON);
 		this.state = arrayFill(this.width, this.height, State.ON);
 
-		for (let y = 0; y < this.height; y++) {
-			let off = this.width - this.genericSum(0, 1, y, 0, this.width, this.solution, this.solution);
-			let n_off = randBetween(1, this.width * offPercentage);
-			let indices = fisherYates(Array.from((new Array(this.width)).keys())).slice(0, n_off);
-			for (let index of indices) {
-				this.solution[index][y] = State.OFF;
-			}
+		let rand;
+		let i = 0;
+		while (i < this.width) {
+			let r = i++;
+			do rand = randBetween(0, this.height - 1); while (this.solution[r][rand] == State.OFF);
+			this.solution[r][rand] = State.OFF;
 		}
-		for (let x = 0; x < this.width; x++) {
-			let off = this.height - this.genericSum(x, 0, 0, 1, this.height, this.solution, this.solution);
-			let n_off = randBetween(1, this.height * offPercentage);
-			while (off < n_off) {
-				let newOff = randBetween(0, this.height - 1);
-				off++;
-				if(this.solution[x][newOff] == State.ON) {
-					this.solution[x][newOff] = State.OFF;
-				}
-			}
+		i = 0;
+		while (i < this.height) {
+			let c = i++;
+			do rand = randBetween(0, this.width - 1); while (this.solution[rand][c] == State.OFF);
+			this.solution[rand][c] = State.OFF;
 		}
-		printGrid(this.solution);
+
+		printGrid(this.solution)
 	};
 };
 
@@ -225,11 +221,11 @@ let randBetween = function (min, max) {
 
 $(document).ready(function () {
 	$("#start").click(function () {
-		$("#solution").empty().hide(0);
+		$("#solution").empty();
 
 		let pGUI = new PuzzleGUI();
 
-		p = new Puzzle(5, 5, pGUI);
+		p = new Puzzle(5, 5, 1, 9, pGUI);
 		p.generate();
 
 		pGUI.render(p);
